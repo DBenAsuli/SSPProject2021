@@ -26,10 +26,10 @@ end
 function [] = question3_parts_abc(x, Sxx, varname)
     N = 400;
     K = 1024;
-    Rxx = estimate_Rxx(x, N);
-    Sxx_pos_correlogram = get_positive_fft(Rxx, K);
+    Rxx_biased_correlogram = estimate_biased_correlogram(x, N);
+    Sxx_pos_biased_correlogram = get_positive_fft(Rxx_biased_correlogram , K);
     figure;
-    plot_positive_spectrum(Sxx_pos_correlogram, 'S_{xx}^B')
+    plot_positive_spectrum(Sxx_pos_biased_correlogram, 'S_{xx}^B')
 
     % Section b: periodogram estimator
     X_k = get_positive_fft(x, K);
@@ -42,12 +42,33 @@ function [] = question3_parts_abc(x, Sxx, varname)
     % 'S_{xx}^B'
     title(strcat('S_{xx} for', {' '}, varname, '[n]'))
     hold on
-    plot_positive_spectrum_graph_only(Sxx_pos_correlogram);
+    plot_positive_spectrum_graph_only(Sxx_pos_biased_correlogram);
     % 'S_{xx}^P'
     plot_positive_spectrum_graph_only(Sxx_pos_periodogram);
     plot_positive_spectrum_graph_only(Sxx);
     hold off
     legend('biased correlogram', 'periodogram', 'true spectrum')
+
+    % Section d: unbiased correlogram
+    Rxx_unbiased_correlogram = estimate_unbiased_correlogram(x, N);
+    Sxx_pos_unbiased_correlogram = get_positive_fft(Rxx_unbiased_correlogram , K);
+    figure;
+    plot_positive_spectrum(Sxx_pos_unbiased_correlogram, 'S_{xx}')
+
+    figure;
+    % 'S_{xx}^B'
+    title(strcat('S_{xx} for', {' '}, varname, '[n]'))
+    hold on
+    plot_positive_spectrum_graph_only(Sxx_pos_biased_correlogram);
+    % 'S_{xx}^P'
+    plot_positive_spectrum_graph_only(Sxx_pos_unbiased_correlogram);
+    plot_positive_spectrum_graph_only(Sxx_pos_periodogram);
+
+    plot_positive_spectrum_graph_only(Sxx);
+    hold off
+    legend('biased correlogram', 'unbiased correlogram', 'periodogram', 'true spectrum')
+
+
 end
 
 function [] = plot_positive_spectrum(Sxx, s_name)
@@ -69,16 +90,16 @@ function ffted_x_positive = get_positive_fft(x, K)
     ffted_x_positive = ffted_x(K + 1 : 2 * K);
 end
 
-function Rxx = estimate_Rxx(x, N)
+function Rxx = estimate_biased_correlogram(x, N)
     Rxx = zeros((2 * N) - 1, 1);
     for l = (0: N - 1)
-        curr = estimate_Rxx_l(x, l, N);
-        Rxx(N - l) = curr;
-        Rxx(N + l) = curr;
+        r = estimate_biased_correlogram_l(x, l, N);
+        Rxx(N - l) = r;
+        Rxx(N + l) = r;
     end
 end
 
-function Rxx_l = estimate_Rxx_l(x, l, N)
+function Rxx_l = estimate_biased_correlogram_l(x, l, N)
     abs_l = abs(l);
     Rxx_l = 0;
     for n = (1 : N - abs_l)
@@ -86,6 +107,24 @@ function Rxx_l = estimate_Rxx_l(x, l, N)
     end
     Rxx_l = Rxx_l / N;
 end    
+
+function Rxx = estimate_unbiased_correlogram(x, N)
+    Rxx = zeros((2 * N) - 1, 1);
+    for l = (0: N - 1)
+        r = estimate_unbiased_correlogram_l(x, l, N);
+        Rxx(N - l) = r;
+        Rxx(N + l) = r;
+    end
+end
+
+function Rxx_l = estimate_unbiased_correlogram_l(x, l, N)
+    abs_l = abs(l);
+    Rxx_l = 0;
+    for n = (1 : N - abs_l)
+        Rxx_l = Rxx_l + x(n) * x(n + abs_l);
+    end
+    Rxx_l = Rxx_l / (N - abs_l);
+end
 
 function [s_xx_a, s_xx_b] = question1(x_a_mone, x_b_mehane)
     % Question 1 section a

@@ -47,8 +47,22 @@ title('Spectrum of the AR(5) process, x_{b}[n]')
 xlabel('\omega [rad]');
 ylabel('|S_{xx_b}(e^{j\omega})|');
 
+%%% Question 2
+wa = randn(404);
+wb = randn(2000);
 
+xa = filter(x_a_mone, 1, wa);
+xb = filter(1, x_b_mehane, wb);
+
+fprintf(xa);
+fprintf(xb);
+
+%% FUNCTIONS
 function [all_roots] = add_conj_inverse_roots(roots)
     conj_inverse_roots = 1 ./ conj(roots);
     all_roots = transpose([roots' conj_inverse_roots']);
 end
+
+
+
+

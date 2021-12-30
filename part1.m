@@ -5,7 +5,7 @@
 % Dvir Ben Asuli, Assaf Gadish
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 x_a_mone = [1 -0.4 -0.69 -0.964 -0.714];
-x_b_mehane = [1 0.6 0.34 -0.034 -0.03807 -0.4212];
+x_b_mehane = [1 0.6 0.34 -0.034 -0.3807 -0.4212];
 
 %%% Question 1
 [Sxx_a, Sxx_b] = question1(x_a_mone, x_b_mehane);

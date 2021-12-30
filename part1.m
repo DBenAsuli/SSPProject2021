@@ -8,7 +8,7 @@ x_a_mone = [1 -0.4 -0.69 -0.964 -0.714];
 x_b_mehane = [1 0.6 0.34 -0.034 -0.03807 -0.4212];
 
 %%% Question 1
-%[Sxx_a, Sxx_b] = question1(x_a_mone, x_b_mehane);
+[Sxx_a, Sxx_b] = question1(x_a_mone, x_b_mehane);
 
 %%% Question 2
 % question2(x_a_mone, x_b_mehane);
@@ -32,8 +32,8 @@ function [] = question4a(x_a_mone, x_b_mehane, M)
     sxxa_array = zeros(M,K);
     sxxb_array = zeros(M,K);
 
-    sxxa = calc_real_spectrum(x_a_mone, [1], K);
-    sxxb = calc_real_spectrum([1], x_b_mehane, K);
+    [sxxa, ~, ~] = calc_real_spectrum(x_a_mone, [1], K);
+    [sxxb, ~, ~] = calc_real_spectrum([1], x_b_mehane, K);
 
     for m = (1:M)
         [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane);
@@ -209,53 +209,45 @@ function Rxx_l = estimate_unbiased_correlogram_l(x, l, N)
     Rxx_l = Rxx_l / (N - abs_l);
 end
 
-function sxx = calc_real_spectrum(x_mone, x_mehane, N)
+function [sxx, sxx_zeros, sxx_poles] = calc_real_spectrum(x_mone, x_mehane, K)
     x_mone_roots = roots(x_mone);
     x_mehane_roots = roots(x_mehane);
     sxx_zeros = add_conj_inverse_roots(x_mone_roots);
     sxx_poles = add_conj_inverse_roots(x_mehane_roots);
     sxx_mone = poly(sxx_zeros);
     sxx_mehane = poly(sxx_poles);
-    sxx = freqz(sxx_mone, sxx_mehane, N);
+    sxx = freqz(sxx_mone, sxx_mehane, K);
 end
 
-function [s_xx_a, s_xx_b] = question1(x_a_mone, x_b_mehane)
+function [sxxa, sxxb] = question1(x_a_mone, x_b_mehane)
+    K = 1024;
     % Question 1 section a
-    x_a_mone_roots = roots(x_a_mone);
-    s_xx_a_zeros = add_conj_inverse_roots(x_a_mone_roots);
+    [sxxa, sxxa_zeros, ~] = calc_real_spectrum(x_a_mone, [1], K);
     fprintf('S_xx_a zeros:\n');
     figure;
-    disp(s_xx_a_zeros)
-    zplane(s_xx_a_zeros, []);
+    disp(sxxa_zeros)
+    zplane(sxxa_zeros, []);
     
-    x_b_mehane_roots = roots(x_b_mehane);
-    s_xx_b_poles = add_conj_inverse_roots(x_b_mehane_roots);
+    [sxxb, ~, sxxb_poles] = calc_real_spectrum([1], x_b_mehane, K);
+
     fprintf('s_xx_b poles:\n');
     figure;
-    disp(s_xx_b_poles)
-    zplane([], s_xx_b_poles);
+    disp(sxxb_poles)
+    zplane([], sxxb_poles);
 
     % Question 1 section b
     N = 1024;
-    %w = linspace(0, pi, N);
-    s_xx_a_mone = poly(s_xx_a_zeros);
-    s_xx_a_mehane = [1];
-    s_xx_a = freqz(s_xx_a_mone, s_xx_a_mehane, N);
-    w = linspace(0, pi, length(s_xx_a));
     
     figure;
-    plot(w, abs(s_xx_a));
+    wa = linspace(0, pi, length(sxxa));
+    plot(wa, abs(sxxa));
     title('Spectrum of the MA(4) process, x_{a}[n]')
     xlabel('\omega [rad]');
     ylabel('|S_{xx_a}(e^{j\omega})|');
     
-    s_xx_b_mone = [1];
-    s_xx_b_mehane = poly(s_xx_b_poles);
-    s_xx_b = freqz(s_xx_b_mone, s_xx_b_mehane, N);
-    w = linspace(0, pi, length(s_xx_b));
-    
     figure;
-    plot(w, abs(s_xx_b));
+    wb = linspace(0, pi, length(sxxb));
+    plot(wb, abs(sxxb));
     title('Spectrum of the AR(5) process, x_{b}[n]')
     xlabel('\omega [rad]');
     ylabel('|S_{xx_b}(e^{j\omega})|');
@@ -284,8 +276,6 @@ function [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane)
     xb_padded = filter(1, x_b_mehane, wb);
     xb = xb_padded(1601:2000);
 end
-
-
 
 function [all_roots] = add_conj_inverse_roots(roots)
     conj_inverse_roots = 1 ./ conj(roots);

@@ -8,26 +8,132 @@ x_a_mone = [1 -0.4 -0.69 -0.964 -0.714];
 x_b_mehane = [1 0.6 0.34 -0.034 -0.3807 -0.4212];
 
 %%% Question 1
-[Sxx_a, Sxx_b] = question1(x_a_mone, x_b_mehane);
+%[Sxx_a, Sxx_b] = question1(x_a_mone, x_b_mehane);
 
 %%% Question 2
-question2(x_a_mone, x_b_mehane);
+%question2(x_a_mone, x_b_mehane);
 
 %%% Question 3
 %question3(x_a_mone, x_b_mehane, Sxx_a, Sxx_b);
 
 %%% Question 4
-%question4(x_a_mone, x_b_mehane);
+question4(x_a_mone, x_b_mehane);
 
 
 
 function [] = question4(x_a_mone, x_b_mehane)
-    question4a(x_a_mone, x_b_mehane, 1000)
+    % Section A
+%     question4_periodogram(x_a_mone, x_b_mehane)
+
+    % Section B
+%     question4_bartlett(x_a_mone, x_b_mehane, 5, 80);
+    
+    % Section C
+%     question4_bartlett(x_a_mone, x_b_mehane, 10, 40);
+
+    % Section D
+    question4_welsh(x_a_mone, x_b_mehane, 80, 40);
+
+    % Section E
+    question4_welsh(x_a_mone, x_b_mehane, 40, 20);
+end
+ 
+function [sxx_welsh] = calc_welsh(x, L, D)
+    N_SAMPLES = 1024;
+    K = floor((size(x, 1) - L) / D) + 1;
+    N = size(x, 1);
+    all_sxx_welshes = zeros(K, N_SAMPLES);
+    % Go over the k-th block (size L)
+    for k = (1 : K)
+        x_kth_block = zeros(1024, 1);
+        x_kth_block(1:L) = x((k - 1) * D + 1 : (k - 1) * D + L);
+        X_k_L = get_positive_fft(x_kth_block, 1024);
+        current_sxx_welsh = 1 / L * (X_k_L .* conj(X_k_L));
+        all_sxx_welshes(k, :) = current_sxx_welsh;
+    end
+
+    sxx_welsh = empiric_average(all_sxx_welshes);
 end
 
-function [] = question4a(x_a_mone, x_b_mehane, M)
+function [] = question4_welsh(x_a_mone, x_b_mehane, L, D)
     K = 1024;
     N = 400;
+    M = 1000;
+
+    sxxa_array = zeros(M,K);
+    sxxb_array = zeros(M,K);
+
+    [sxxa, wa, ~, ~] = calc_real_spectrum(x_a_mone, [1], K);
+    [sxxb, wb, ~, ~] = calc_real_spectrum([1], x_b_mehane, K);
+
+    for m = (1:M)
+        [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane);
+        
+        sxxa_welsh = calc_welsh(xa, L, D);
+        sxxa_array(m,:) = sxxa_welsh;
+
+        sxxb_welsh = calc_welsh(xb, L, D);
+        sxxb_array(m,:) = sxxb_welsh;
+    end
+
+    [sxxa_hat, Ba, std_a, RMSE_a] = calc_empiric_values(sxxa_array, sxxa);
+    [sxxb_hat, Bb, std_b, RMSE_b] = calc_empiric_values(sxxb_array, sxxb);
+
+    plot_empiric_values(sxxa, Ba, std_a, RMSE_a, sprintf('Welsh for x_a[n] with L=%d, D=%d', L, D));
+    plot_empiric_values(sxxb, Bb, std_b, RMSE_b, sprintf('Welsh for x_b[n] with L=%d, D=%d', L, D));
+end
+
+function [sxx_bartlett] = calc_bartlett(x, K, L)
+    N_SAMPLES = 1024;
+    N = size(x, 1);
+    assert(N <= K * L, "Bartlett errors: size of x must be at least K * L");
+    all_sxx_bartletts = zeros(K, N_SAMPLES);
+    % Go over the k-th block (size L)
+    for k = (1 : K)
+        x_kth_block = zeros(1024, 1);
+        x_kth_block(1:L) = x((k - 1) * L + 1 : k * L);
+        X_k_L = get_positive_fft(x_kth_block, 1024);
+        current_sxx_bartlett = 1 / L * (X_k_L .* conj(X_k_L));
+        all_sxx_bartletts(k, :) = current_sxx_bartlett;
+    end
+
+    sxx_bartlett = empiric_average(all_sxx_bartletts);
+end
+
+
+function [] = question4_bartlett(x_a_mone, x_b_mehane, K_bartlett, L)
+    K = 1024;
+    N = 400;
+    M = 1000;
+
+    sxxa_array = zeros(M,K);
+    sxxb_array = zeros(M,K);
+
+    [sxxa, wa, ~, ~] = calc_real_spectrum(x_a_mone, [1], K);
+    [sxxb, wb, ~, ~] = calc_real_spectrum([1], x_b_mehane, K);
+
+    for m = (1:M)
+        [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane);
+        
+        sxxa_bartlett = calc_bartlett(xa, K_bartlett, L);
+        sxxa_array(m,:) = sxxa_bartlett;
+
+        sxxb_bartlett = calc_bartlett(xb, K_bartlett, L);
+        sxxb_array(m,:) = sxxb_bartlett;
+    end
+
+    [sxxa_hat, Ba, std_a, RMSE_a] = calc_empiric_values(sxxa_array, sxxa);
+    [sxxb_hat, Bb, std_b, RMSE_b] = calc_empiric_values(sxxb_array, sxxb);
+
+    plot_empiric_values(sxxa, Ba, std_a, RMSE_a, sprintf('Bartlett for x_a[n] with K=%d, L=%d', K_bartlett, L));
+    plot_empiric_values(sxxb, Bb, std_b, RMSE_b, sprintf('Bartlett for x_b[n] with K=%d, L=%d', K_bartlett, L));
+
+end
+
+function [] = question4_periodogram(x_a_mone, x_b_mehane)
+    K = 1024;
+    N = 400;
+    M = 1000;
 
     sxxa_array = zeros(M,K);
     sxxb_array = zeros(M,K);
@@ -68,11 +174,11 @@ function [] = plot_empiric_values(sxx, B, std, RMSE, varname)
     title(strcat('Performance:', {' '}, varname, '[n]'))
     hold on
     plot_positive_spectrum_graph_only(sxx);
-    plot_positive_spectrum_graph_only(B);
-    plot_positive_spectrum_graph_only(std);
-    plot_positive_spectrum_graph_only(RMSE);
+    plot_spectrum_graph_only(B);
+    plot_spectrum_graph_only(std);
+    plot_spectrum_graph_only(RMSE);
     hold off
-    legend('sxx', 'Bias', 'std', 'RMSE')
+    legend('sxx', 'bias', 'std', 'RMSE')
 end
 
 function [sxx_hat] = empiric_average(sxx_array)
@@ -82,7 +188,7 @@ function [sxx_hat] = empiric_average(sxx_array)
 end
 
 function [B] = empiric_bias(sxx_hat, sxx)
-    B = sxx_hat - sxx;
+    B = sxx_hat - abs(sxx);
 end
 
 function [V] = empiric_variance(sxx_hat, sxx_array)
@@ -94,7 +200,7 @@ end
 
 function [MSE] = empiric_mse(sxx_array, sxx)
     M = size(sxx_array, 1);
-    v_array = (sxx_array - sxx').^2;
+    v_array = (sxx_array - abs(sxx)').^2;
     V = sum(v_array)';
     MSE = V/ M;
 end
@@ -161,6 +267,11 @@ function [] = plot_positive_spectrum(Sxx, s_name, varname)
     ylabel(strcat('|', s_name, '(e^{j\omega})| [dB] for', {' '}, varname));
 end
 
+function [] = plot_spectrum_graph_only(Sxx)
+    w = linspace(0, pi, length(Sxx));
+    plot(w, Sxx);
+end
+
 function [] = plot_positive_spectrum_graph_only(Sxx)
     w = linspace(0, pi, length(Sxx));
     plot(w, abs(Sxx));
@@ -212,10 +323,12 @@ end
 function [sxx, w, sxx_zeros, sxx_poles] = calc_real_spectrum(x_mone, x_mehane, K)
     x_mone_roots = roots(x_mone);
     x_mehane_roots = roots(x_mehane);
+    factor_mone = prod(abs(x_mone_roots)); 
+    factor_mehane = prod(abs(x_mehane_roots)); 
     sxx_zeros = add_conj_inverse_roots(x_mone_roots);
     sxx_poles = add_conj_inverse_roots(x_mehane_roots);
-    sxx_mone = poly(sxx_zeros);
-    sxx_mehane = poly(sxx_poles);
+    sxx_mone = poly(sxx_zeros) * factor_mone;
+    sxx_mehane = poly(sxx_poles) * factor_mehane;
     [sxx, w] = freqz(sxx_mone, sxx_mehane, K);
 end
 
@@ -236,7 +349,6 @@ function [sxxa, sxxb] = question1(x_a_mone, x_b_mehane)
     disp(sxxb_poles)
     zplane([], sxxb_poles);
     title('Zplane of the AR(5) process, x_{b}[n]');
-
 
     % Question 1 section b    
     figure;

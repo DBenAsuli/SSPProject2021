@@ -11,13 +11,13 @@ x_b_mehane = [1 0.6 0.34 -0.034 -0.3807 -0.4212];
 [Sxx_a, Sxx_b] = question1(x_a_mone, x_b_mehane);
 
 %%% Question 2
-% question2(x_a_mone, x_b_mehane);
+question2(x_a_mone, x_b_mehane);
 
 %%% Question 3
 %question3(x_a_mone, x_b_mehane, Sxx_a, Sxx_b);
 
 %%% Question 4
-question4(x_a_mone, x_b_mehane);
+%question4(x_a_mone, x_b_mehane);
 
 
 
@@ -32,8 +32,8 @@ function [] = question4a(x_a_mone, x_b_mehane, M)
     sxxa_array = zeros(M,K);
     sxxb_array = zeros(M,K);
 
-    [sxxa, ~, ~] = calc_real_spectrum(x_a_mone, [1], K);
-    [sxxb, ~, ~] = calc_real_spectrum([1], x_b_mehane, K);
+    [sxxa, wa, ~, ~] = calc_real_spectrum(x_a_mone, [1], K);
+    [sxxb, wb, ~, ~] = calc_real_spectrum([1], x_b_mehane, K);
 
     for m = (1:M)
         [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane);
@@ -112,13 +112,13 @@ function [] = question3_parts_abc(x, Sxx, varname)
     Rxx_biased_correlogram = estimate_biased_correlogram(x, N);
     Sxx_pos_biased_correlogram = get_positive_fft(Rxx_biased_correlogram , K);
     figure;
-    plot_positive_spectrum(Sxx_pos_biased_correlogram, 'S_{xx}^B')
+    plot_positive_spectrum(Sxx_pos_biased_correlogram, 'S_{xx}^B', varname);
 
     % Section b: periodogram estimator
     X_k = get_positive_fft(x, K);
     Sxx_pos_periodogram = 1 / N * (X_k .* conj(X_k));
     figure;
-    plot_positive_spectrum(Sxx_pos_periodogram, 'S_{xx}^P')
+    plot_positive_spectrum(Sxx_pos_periodogram, 'S_{xx}^P', varname);
 
     % Section c: a,b with original
     figure;
@@ -136,29 +136,29 @@ function [] = question3_parts_abc(x, Sxx, varname)
     Rxx_unbiased_correlogram = estimate_unbiased_correlogram(x, N);
     Sxx_pos_unbiased_correlogram = get_positive_fft(Rxx_unbiased_correlogram , K);
     figure;
-    plot_positive_spectrum(Sxx_pos_unbiased_correlogram, 'S_{xx}')
+    plot_positive_spectrum(Sxx_pos_unbiased_correlogram, 'S_{xx}', varname);
 
     figure;
     % 'S_{xx}^B'
-    title(strcat('S_{xx} for', {' '}, varname, '[n]'))
-    hold on
+    title(strcat('S_{xx} for', {' '}, varname, '[n]'));
+    hold on;
     plot_positive_spectrum_graph_only(Sxx_pos_biased_correlogram);
     % 'S_{xx}^P'
     plot_positive_spectrum_graph_only(Sxx_pos_unbiased_correlogram);
     plot_positive_spectrum_graph_only(Sxx_pos_periodogram);
 
     plot_positive_spectrum_graph_only(Sxx);
-    hold off
+    hold off;
     legend('biased correlogram', 'unbiased correlogram', 'periodogram', 'true spectrum')
 
 
 end
 
-function [] = plot_positive_spectrum(Sxx, s_name)
+function [] = plot_positive_spectrum(Sxx, s_name, varname)
     plot_positive_spectrum_graph_only(Sxx);
-    title(strcat('|', s_name, '(e^{j\omega})|(\omega)'))
+    title(strcat('|', s_name, '(e^{j\omega})|(\omega) for', {' '}, varname))
     xlabel('\omega [rad]');
-    ylabel(strcat('|', s_name, '(e^{j\omega})| [dB]'));
+    ylabel(strcat('|', s_name, '(e^{j\omega})| [dB] for', {' '}, varname));
 end
 
 function [] = plot_positive_spectrum_graph_only(Sxx)
@@ -209,44 +209,43 @@ function Rxx_l = estimate_unbiased_correlogram_l(x, l, N)
     Rxx_l = Rxx_l / (N - abs_l);
 end
 
-function [sxx, sxx_zeros, sxx_poles] = calc_real_spectrum(x_mone, x_mehane, K)
+function [sxx, w, sxx_zeros, sxx_poles] = calc_real_spectrum(x_mone, x_mehane, K)
     x_mone_roots = roots(x_mone);
     x_mehane_roots = roots(x_mehane);
     sxx_zeros = add_conj_inverse_roots(x_mone_roots);
     sxx_poles = add_conj_inverse_roots(x_mehane_roots);
     sxx_mone = poly(sxx_zeros);
     sxx_mehane = poly(sxx_poles);
-    sxx = freqz(sxx_mone, sxx_mehane, K);
+    [sxx, w] = freqz(sxx_mone, sxx_mehane, K);
 end
 
 function [sxxa, sxxb] = question1(x_a_mone, x_b_mehane)
     K = 1024;
     % Question 1 section a
-    [sxxa, sxxa_zeros, ~] = calc_real_spectrum(x_a_mone, [1], K);
+    [sxxa, wa, sxxa_zeros, ~] = calc_real_spectrum(x_a_mone, [1], K);
     fprintf('S_xx_a zeros:\n');
     figure;
     disp(sxxa_zeros)
     zplane(sxxa_zeros, []);
+    title('Zplane of the MA(4) process, x_{a}[n]');
     
-    [sxxb, ~, sxxb_poles] = calc_real_spectrum([1], x_b_mehane, K);
+    [sxxb, wb, ~, sxxb_poles] = calc_real_spectrum([1], x_b_mehane, K);
 
     fprintf('s_xx_b poles:\n');
     figure;
     disp(sxxb_poles)
     zplane([], sxxb_poles);
+    title('Zplane of the AR(5) process, x_{b}[n]');
 
-    % Question 1 section b
-    N = 1024;
-    
+
+    % Question 1 section b    
     figure;
-    wa = linspace(0, pi, length(sxxa));
     plot(wa, abs(sxxa));
     title('Spectrum of the MA(4) process, x_{a}[n]')
     xlabel('\omega [rad]');
     ylabel('|S_{xx_a}(e^{j\omega})|');
     
     figure;
-    wb = linspace(0, pi, length(sxxb));
     plot(wb, abs(sxxb));
     title('Spectrum of the AR(5) process, x_{b}[n]')
     xlabel('\omega [rad]');

@@ -32,12 +32,59 @@ function [] = question4(x_a_mone, x_b_mehane)
 %     question4_bartlett(x_a_mone, x_b_mehane, 10, 40);
 
     % Section D
-    question4_welsh(x_a_mone, x_b_mehane, 80, 40);
+%     question4_welsh(x_a_mone, x_b_mehane, 80, 40);
 
     % Section E
-    question4_welsh(x_a_mone, x_b_mehane, 40, 20);
+%     question4_welsh(x_a_mone, x_b_mehane, 40, 20);
+
+    % Section F
+    question4_blackman_tukey(x_a_mone, x_b_mehane, 40);
+
+    % Section G
+    question4_blackman_tukey(x_a_mone, x_b_mehane, 20);
 end
- 
+
+function [sxx_blackman_tukey] = calc_blackman_tukey(x, L)
+    K = 1024;
+    N = size(x, 1);
+    x(L + 1 : N) = zeros(N - L, 1)';
+    X_k = get_positive_fft(x, K) * pi;
+    sxx_pos_periodogram = 1 / N * (X_k .* conj(X_k));
+
+%     w = linspace(0, pi, K);
+%     window = (sin(w / 2 * (2 * L +1)) ./ sin(w/2))';
+%     sxx_blackman_tukey = 1 / (2 * pi) * (sxx_pos_periodogram .* window);
+    sxx_blackman_tukey = sxx_pos_periodogram;
+end
+
+function [] = question4_blackman_tukey(x_a_mone, x_b_mehane, L)
+    K = 1024;
+    N = 400;
+    M = 1000;
+
+    sxxa_array = zeros(M,K);
+    sxxb_array = zeros(M,K);
+
+    [sxxa, wa, ~, ~] = calc_real_spectrum(x_a_mone, [1], K);
+    [sxxb, wb, ~, ~] = calc_real_spectrum([1], x_b_mehane, K);
+
+    for m = (1:M)
+        [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane);
+        
+        sxxa_blackman_tukey = calc_blackman_tukey(xa, L);
+        sxxa_array(m,:) = sxxa_blackman_tukey;
+
+        sxxb_blackman_tukey = calc_blackman_tukey(xb, L);
+        sxxb_array(m,:) = sxxb_blackman_tukey;
+    end
+
+    [sxxa_hat, Ba, std_a, RMSE_a] = calc_empiric_values(sxxa_array, sxxa);
+    [sxxb_hat, Bb, std_b, RMSE_b] = calc_empiric_values(sxxb_array, sxxb);
+
+    plot_empiric_values(sxxa, Ba, std_a, RMSE_a, sprintf('Blackman-Tukey for x_a[n] with L=%d', L));
+    plot_empiric_values(sxxb, Bb, std_b, RMSE_b, sprintf('Blackman-Tukey for x_b[n] with L=%d', L));
+end
+
 function [sxx_welsh] = calc_welsh(x, L, D)
     N_SAMPLES = 1024;
     K = floor((size(x, 1) - L) / D) + 1;
@@ -276,7 +323,6 @@ function [] = plot_positive_spectrum_graph_only(Sxx)
     w = linspace(0, pi, length(Sxx));
     plot(w, abs(Sxx));
 end
-
 
 function ffted_x_positive = get_positive_fft(x, K)
     x_padded = [x' zeros(1, 2 * K - size(x, 1))];

@@ -19,9 +19,67 @@ x_b_mehane = [1 0.6 0.34 -0.034 -0.3807 -0.4212];
 %%% Question 4
 question4(x_a_mone, x_b_mehane);
 
+%%% Question 5
+question5(x_a_mone, x_b_mehane);
 
+function [b_avg, v_avg, mse_avg] = question5_get_avarages(b, v, mse)
+    b_avg = norm(b) / 1024;
+    v_avg = mean(v);
+    mse_avg = mean(mse);
+end
 
-function [] = question4(x_a_mone, x_b_mehane)
+function [] = question5_print_stuff(name, Ba, stda, MSEa, Bb, stdb, MSEb)
+    [Ba, stda, MSEa] = question5_get_avarages(Ba, stda, MSEa);
+    [Bb, stdb, MSEb] = question5_get_avarages(Bb, stdb, MSEb);
+    fprintf("%s: x_a[n] got <B^2>=%d, <V>=%d, <MSE>=%d\n", name, Ba, stda, MSEa);
+    fprintf("%s: x_b[n] got <B^2>=%d, <V>=%d, <MSE>=%d\n", name, Bb, stdb, MSEb);
+end
+
+function [] = question5(x_a_mone, x_b_mehane)
+% Section A
+    [~, Baa, stdaa, MSEaa, ~, Bba, stdba, MSEba] = question4_periodogram(x_a_mone, x_b_mehane);
+    question5_print_stuff("Periodogram", Baa, stdaa, MSEaa, Bba, stdba, MSEba);
+%     [Baa, stdaa, MSEaa] = question5_get_avarages(Baa, stdaa, MSEaa);
+%     [Bba, stdba, MSEba] = question5_get_avarages(Bba, stdba, MSEba);
+    % Section B
+    [~, Bab, stdab, MSEab, ~, Bbb, stdbb, MSEbb] = question4_bartlett(x_a_mone, x_b_mehane, 5, 80);
+    question5_print_stuff("Bartlett", Bab, stdab, MSEab, Bbb, stdbb, MSEbb);
+%     [Bab, stdab, MSEab] = question5_get_avarages(Bab, stdab, MSEab);
+%     [Bbb, stdbb, MSEbb] = question5_get_avarages(Bbb, stdbb, MSEbb);
+    
+    % Section C
+    [~, Bac, stdac, MSEac, ~, Bbc, stdbc, MSEbc] = question4_bartlett(x_a_mone, x_b_mehane, 10, 40);
+%     [Bac, stdac, MSEac] = question5_get_avarages(Bac, stdac, MSEac);
+%     [Bbc, stdbc, MSEbc] = question5_get_avarages(Bbc, stdbc, MSEbc);
+    question5_print_stuff("Bartlett", Bac, stdac, MSEac, Bbc, stdbc, MSEbc);
+
+    % Section D
+    [~, Bad, stdad, MSEad, ~, Bbd, stdbd, MSEbd] = question4_welsh(x_a_mone, x_b_mehane, 80, 40);
+%     [Bad, stdad, MSEad] = question5_get_avarages(Bad, stdad, MSEad);
+%     [Bbd, stdbd, MSEbd] = question5_get_avarages(Bbd, stdbd, MSEbd);
+    question5_print_stuff("Welsh", Bad, stdad, MSEad, Bbd, stdbd, MSEbd);
+
+    % Section E
+    [~, Bae, stdae, MSEae, ~, Bbe, stdbe, MSEbe] = question4_welsh(x_a_mone, x_b_mehane, 40, 20);
+%     [Bae, stdae, MSEae] = question5_get_avarages(Bae, stdae, MSEae);
+%     [Bbe, stdbe, MSEbe] = question5_get_avarages(Bbe, stdbe, MSEbe);
+    question5_print_stuff("Welsh", Bae, stdae, MSEae, Bbe, stdbe,MSEbe);
+
+    % Section F
+    [~, Baf, stdaf, MSEaf, ~, Bbf, stdbf, MSEbf] = question4_blackman_tukey(x_a_mone, x_b_mehane, 40);
+%     [Baf, stdaf, MSEaf] = question5_get_avarages(Baf, stdaf, MSEaf);
+%     [Bbf, stdbf, MSEbf] = question5_get_avarages(Bbf, stdbf, MSEbf);
+    question5_print_stuff("Blackman-Tukey", Baf, stdaf, MSEaf, Bbf, stdbf,MSEbf);
+
+    % Section G
+    [~, Bag, stdag, MSEag, ~, Bbg, stdbg, MSEbg] = question4_blackman_tukey(x_a_mone, x_b_mehane, 20);
+%     [Bag, stdag, MSEag] = question5_get_avarages(Bag, stdag, MSEag);
+%     [Bbg, stdbg, MSEbg] = question5_get_avarages(Bbg, stdbg, MSEbg);
+    question5_print_stuff("Blackman-Tukey", Bag, stdag, MSEag, Bbg, stdbg,MSEbg);
+
+end
+
+function [] = question4(x_a_mo  ne, x_b_mehane)
     % Section A
 %     question4_periodogram(x_a_mone, x_b_mehane)
 
@@ -44,20 +102,40 @@ function [] = question4(x_a_mone, x_b_mehane)
     question4_blackman_tukey(x_a_mone, x_b_mehane, 20);
 end
 
-function [sxx_blackman_tukey] = calc_blackman_tukey(x, L)
-    K = 1024;
+function wx = multiply_with_bartlett_window(x)
     N = size(x, 1);
-    x(L + 1 : N) = zeros(N - L, 1)';
-    X_k = get_positive_fft(x, K) * pi;
-    sxx_pos_periodogram = 1 / N * (X_k .* conj(X_k));
-
-%     w = linspace(0, pi, K);
-%     window = (sin(w / 2 * (2 * L +1)) ./ sin(w/2))';
-%     sxx_blackman_tukey = 1 / (2 * pi) * (sxx_pos_periodogram .* window);
-    sxx_blackman_tukey = sxx_pos_periodogram;
+    l = [1 : N];
+    window_vector = 1 - (l / N);
+    wx = (window_vector') .* x;
 end
 
-function [] = question4_blackman_tukey(x_a_mone, x_b_mehane, L)
+% function [sxx_bt] = calc_blackman_tukey(x, L)
+%     K = 1024;
+%     N = size(x, 1);
+% 
+%     Xk = get_positive_fft(x, K);
+%     Sxxa_pos_periodogram = 1 / N * (Xk .* conj(Xk));
+%     
+%     w = (1 : N);
+%     Window = sin(w ./ 2 * (2 * L + 1)) ./ sin(w ./2);
+%     sxx_bt_larger = 1 / (2 * pi) * conv(Sxxa_pos_periodogram, Window);
+%     sxx_bt = sxx_bt_larger(1:1024);
+% %     sxx_bt = abs(get_positive_fft(x, K)) / (2 * pi);
+% end
+
+function [sxx_bt] = calc_blackman_tukey(x, L)
+    K = 1024;
+    N = size(x, 1);
+    Rxx_correlogram = estimate_unbiased_correlogram(x, N);
+    % Calculate Rxx barlett
+    rxx_bt = multiply_with_bartlett_window(Rxx_correlogram);
+%     rxx_bt = Rxx_correlogram;
+    % Multiply Rxx with rectangle window
+    rxx_bt(L + 1 : N) = zeros(N - L, 1)';
+    sxx_bt = abs(get_positive_fft(x, K));
+end
+
+function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_blackman_tukey(x_a_mone, x_b_mehane, L)
     K = 1024;
     N = 400;
     M = 1000;
@@ -102,7 +180,7 @@ function [sxx_welsh] = calc_welsh(x, L, D)
     sxx_welsh = empiric_average(all_sxx_welshes);
 end
 
-function [] = question4_welsh(x_a_mone, x_b_mehane, L, D)
+function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_welsh(x_a_mone, x_b_mehane, L, D)
     K = 1024;
     N = 400;
     M = 1000;
@@ -148,7 +226,7 @@ function [sxx_bartlett] = calc_bartlett(x, K, L)
 end
 
 
-function [] = question4_bartlett(x_a_mone, x_b_mehane, K_bartlett, L)
+function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_bartlett(x_a_mone, x_b_mehane, K_bartlett, L)
     K = 1024;
     N = 400;
     M = 1000;
@@ -177,7 +255,7 @@ function [] = question4_bartlett(x_a_mone, x_b_mehane, K_bartlett, L)
 
 end
 
-function [] = question4_periodogram(x_a_mone, x_b_mehane)
+function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_periodogram(x_a_mone, x_b_mehane)
     K = 1024;
     N = 400;
     M = 1000;

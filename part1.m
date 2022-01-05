@@ -4,6 +4,7 @@
 % Part 1
 % Dvir Ben Asuli, Assaf Gadish
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+close all;
 x_a_mone = [1 -0.4 -0.69 -0.964 -0.714];
 x_b_mehane = [1 0.6 0.34 -0.034 -0.3807 -0.4212];
 
@@ -17,10 +18,81 @@ x_b_mehane = [1 0.6 0.34 -0.034 -0.3807 -0.4212];
 %question3(x_a_mone, x_b_mehane, Sxx_a, Sxx_b);
 
 %%% Question 4
-question4(x_a_mone, x_b_mehane);
+ question4(x_a_mone, x_b_mehane);
 
 %%% Question 5
-question5(x_a_mone, x_b_mehane);
+%question5(x_a_mone, x_b_mehane);
+
+%%% Question 6
+% question6(x_a_mone, x_b_mehane);
+
+function [] = question6_estimate_ma(x, sxx, signal_name)
+    rxx = estimate_unbiased_correlogram(x, size(x, 1));
+    rxx = zero_pad_center(rxx, 6);
+    x_ma_3 = question6_calc_maq(rxx, 3);
+    x_ma_4 = question6_calc_maq(rxx, 4);
+    x_ma_5 = question6_calc_maq(rxx, 5);
+
+    figure;
+    title(strcat('Estimates Sxx using MA(q) models for ', {' '}, signal_name));
+    hold on
+    plot_positive_spectrum_graph_only(x_ma_3);
+    plot_positive_spectrum_graph_only(x_ma_4);
+    plot_positive_spectrum_graph_only(x_ma_5);
+    plot_positive_spectrum_graph_only(sxx);
+    hold off
+    legend('q=3', 'q=4', 'q=5', 'Sxx')
+
+end
+
+function [] = question6_estimate_ar(x, sxx, signal_name)
+    rxx = estimate_unbiased_correlogram(x, size(x, 1));
+    N = size(x, 1);
+    K = 1024;
+
+    figure;
+    title(strcat('Estimates Sxx using AR(p) models for ', {' '}, signal_name));
+    hold on;
+    for p = [4 5 6]
+        toeplitz_A = toeplitz(rxx(N : N + p - 1));
+        results_B = -(rxx(N + 1 : N + p));
+        a_estimated = [1; linsolve(toeplitz_A, results_B)];
+%% TODO: Figure out why the graph is too scaled up. Maybe wrong factor
+        sigma_w_square = a_estimated' * rxx(N : N + p);
+        ak_fft = get_positive_fft(a_estimated, K);
+        sxx_hat = sigma_w_square ./ (ak_fft .* conj(ak_fft));
+        plot_positive_spectrum_graph_only(sxx_hat);
+    end
+
+    plot_positive_spectrum_graph_only(sxx);
+    hold off;
+    legend('p=3', 'p=4', 'p=5', 'Sxx');
+
+end
+
+function [] = question6(x_a_mone, x_b_mehane)
+    K = 1024;
+    [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane);
+    [sxxa, ~, ~, ~] = calc_real_spectrum(x_a_mone, [1], K);
+    [sxxb, ~, ~, ~] = calc_real_spectrum([1], x_b_mehane, K);
+
+    question6_estimate_ma(xa, sxxa, 'x_a[n]');
+    question6_estimate_ma(xb, sxxb, 'x_b[n]');
+
+    question6_estimate_ar(xa, sxxa, 'x_a[n]');
+    question6_estimate_ar(xb, sxxb, 'x_b[n]');
+end
+
+function [cropped_x] = zero_pad_center(x, radius)
+    n = size(x, 1);
+    nc = (n + 1) / 2;
+    cropped_x = [zeros(1, nc - radius) x(nc - radius : nc + radius)' zeros(1, nc - radius)]';
+end
+
+function [Sxx] = question6_calc_maq(r_xx, q)
+    r_xx = zero_pad_center(r_xx, q);
+    Sxx = get_positive_fft(r_xx, 1024);
+end
 
 function [b_avg, v_avg, mse_avg] = question5_get_avarages(b, v, mse)
     b_avg = norm(b) / 1024;
@@ -79,7 +151,7 @@ function [] = question5(x_a_mone, x_b_mehane)
 
 end
 
-function [] = question4(x_a_mo  ne, x_b_mehane)
+function [] = question4(x_a_mone, x_b_mehane)
     % Section A
 %     question4_periodogram(x_a_mone, x_b_mehane)
 
@@ -126,13 +198,13 @@ end
 function [sxx_bt] = calc_blackman_tukey(x, L)
     K = 1024;
     N = size(x, 1);
-    Rxx_correlogram = estimate_unbiased_correlogram(x, N);
+    Rxx_correlogram = estimate_biased_correlogram(x, N);
     % Calculate Rxx barlett
     rxx_bt = multiply_with_bartlett_window(Rxx_correlogram);
 %     rxx_bt = Rxx_correlogram;
     % Multiply Rxx with rectangle window
-    rxx_bt(L + 1 : N) = zeros(N - L, 1)';
-    sxx_bt = abs(get_positive_fft(x, K));
+    rxx_bt = [zeros(1, N - L - 1) rxx_bt(N - L : N + L)' zeros(1, N - L - 1)]';
+    sxx_bt = abs(get_positive_fft(rxx_bt, K));
 end
 
 function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_blackman_tukey(x_a_mone, x_b_mehane, L)

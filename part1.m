@@ -18,7 +18,7 @@ question2(x_a_mone, x_b_mehane);
 question3(x_a_mone, x_b_mehane, Sxx_a, Sxx_b);
 
 %%% Question 4
-question4(x_a_mone, x_b_mehane);
+%question4(x_a_mone, x_b_mehane);
 
 %%% Question 5
 question5(x_a_mone, x_b_mehane);

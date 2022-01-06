@@ -9,22 +9,22 @@ x_a_mone = [1 -0.4 -0.69 -0.964 -0.714];
 x_b_mehane = [1 0.6 0.34 -0.034 -0.3807 -0.4212];
 
 %%% Question 1
-% [Sxx_a, Sxx_b] = question1(x_a_mone, x_b_mehane);
+[Sxx_a, Sxx_b] = question1(x_a_mone, x_b_mehane);
 
 %%% Question 2
-% question2(x_a_mone, x_b_mehane);
+question2(x_a_mone, x_b_mehane);
 
 %%% Question 3
-% question3(x_a_mone, x_b_mehane, Sxx_a, Sxx_b);
+question3(x_a_mone, x_b_mehane, Sxx_a, Sxx_b);
 
 %%% Question 4
-% question4(x_a_mone, x_b_mehane);
+question4(x_a_mone, x_b_mehane);
 
 %%% Question 5
-% question5(x_a_mone, x_b_mehane);
+question5(x_a_mone, x_b_mehane);
 
 %%% Question 6
-% question6(x_a_mone, x_b_mehane);
+question6(x_a_mone, x_b_mehane);
 
 %%% Question 7
 question7(x_a_mone, x_b_mehane);
@@ -435,7 +435,7 @@ end
 
 function [] = plot_empiric_values(sxx, B, std, RMSE, varname)
     figure;
-    title(strcat('Performance:', {' '}, varname, '[n]'))
+    title(strcat('Performance:', {' '}, varname))
     hold on
     plot_positive_spectrum_graph_only(sxx);
     plot_spectrum_graph_only(B);
@@ -650,7 +650,3 @@ function [all_roots] = add_conj_inverse_roots(roots)
     conj_inverse_roots = 1 ./ conj(roots);
     all_roots = transpose([roots' conj_inverse_roots']);
 end
-
-
-
-

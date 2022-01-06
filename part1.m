@@ -617,7 +617,6 @@ function [sxxa, sxxb] = question1(x_a_mone, x_b_mehane)
     [sxxa, wa, sxxa_zeros, ~] = calc_real_spectrum(x_a_mone, [1], K);
     [sxxb, wb, ~, sxxb_poles] = calc_real_spectrum([1], x_b_mehane, K);
 
-    return;
     fprintf('S_xx_a zeros:\n');
     figure;
     disp(sxxa_zeros)

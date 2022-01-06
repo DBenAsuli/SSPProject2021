@@ -1,9 +1,12 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% SSP Project 2021
-% MATLAB Exercise
-% Part 1
-% Dvir Ben Asuli, Assaf Gadish
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Statistic Signal Processing     Project 2021
+%               MATLAB Exercise
+% Tel-Aviv University             January 2022
+%
+% Dvir Ben Asuli                  318208816
+% Assaf Gadish                    206017899
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 close all;
 x_a_mone = [1 -0.4 -0.69 -0.964 -0.714];
 x_b_mehane = [1 0.6 0.34 -0.034 -0.3807 -0.4212];
@@ -18,7 +21,7 @@ question2(x_a_mone, x_b_mehane);
 question3(x_a_mone, x_b_mehane, Sxx_a, Sxx_b);
 
 %%% Question 4
-%question4(x_a_mone, x_b_mehane);
+question4(x_a_mone, x_b_mehane);
 
 %%% Question 5
 question5(x_a_mone, x_b_mehane);
@@ -30,6 +33,7 @@ question6(x_a_mone, x_b_mehane);
 question7(x_a_mone, x_b_mehane);
 
 
+% Question 7
 function [] = question7(x_a_mone, x_b_mehane)
     M = 1000;
     K = 1024;
@@ -100,6 +104,7 @@ function [] = question7(x_a_mone, x_b_mehane)
     end
 end
 
+% Calculate all MA(1) estimators for q = 3, 4, 5
 function [] = question6_estimate_ma(x, sxx, signal_name)
     rxx = estimate_unbiased_correlogram(x, size(x, 1));
     rxx = zero_pad_center(rxx, 6);
@@ -119,6 +124,7 @@ function [] = question6_estimate_ma(x, sxx, signal_name)
 
 end
 
+% Calculation AR(p) Estimator based on Rxx
 function [sxx_ar_p] = question6_calc_arp(rxx, p)
     N = (size(rxx, 1) + 1) / 2;
     K = 1024;
@@ -131,6 +137,7 @@ function [sxx_ar_p] = question6_calc_arp(rxx, p)
     sxx_ar_p = sigma_w_square ./ (ak_fft .* conj(ak_fft));
 end
 
+% Calculare AR estimators for Q6
 function [] = question6_estimate_ar(x, sxx, signal_name)
     rxx = estimate_unbiased_correlogram(x, size(x, 1));
     N = size(x, 1);
@@ -149,6 +156,7 @@ function [] = question6_estimate_ar(x, sxx, signal_name)
 
 end
 
+% Question 6
 function [] = question6(x_a_mone, x_b_mehane)
     K = 1024;
     [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane);
@@ -162,25 +170,28 @@ function [] = question6(x_a_mone, x_b_mehane)
     question6_estimate_ar(xb, sxxb, 'x_b[n]');
 end
 
+% Eliminating all the values of a sequence outside a given radius
 function [cropped_x] = zero_pad_center(x, radius)
     n = size(x, 1);
     nc = (n + 1) / 2;
     cropped_x = [zeros(nc - (radius + 1), 1) ; x(nc - radius : nc + radius) ; zeros(nc - (radius + 1), 1)];
 end
 
+% Calculation MA(q) Estimator based on Rxx
 function [Sxx] = question6_calc_maq(r_xx, q)
     r_xx = zero_pad_center(r_xx, q);
     Sxx = correlation_to_spectrum(r_xx, 1024);
 
-%     Sxx = get_positive_fft(r_xx, 1024);
 end
 
+% Calculate average empiric values for all experiments
 function [b_avg, v_avg, mse_avg] = question5_get_avarages(b, v, mse)
     b_avg = (norm(b) ^ 2) / size(b, 1);
     v_avg = mean(v);
     mse_avg = mean(mse);
 end
 
+% Print empiric values for Q5 
 function [] = question5_print_stuff(name, Ba, stda, MSEa, Bb, stdb, MSEb)
     [Ba, stda, MSEa] = question5_get_avarages(Ba, stda, MSEa);
     [Bb, stdb, MSEb] = question5_get_avarages(Bb, stdb, MSEb);
@@ -188,6 +199,7 @@ function [] = question5_print_stuff(name, Ba, stda, MSEa, Bb, stdb, MSEb)
     fprintf("%s: x_b[n] got <B^2>=%d, <V>=%d, <MSE>=%d\n", name, Bb, stdb, MSEb);
 end
 
+% Run Question 5
 function [] = question5(x_a_mone, x_b_mehane)
 % Section A
     [~, Baa, stdaa, MSEaa, ~, Bba, stdba, MSEba] = question4_periodogram(x_a_mone, x_b_mehane);
@@ -218,6 +230,7 @@ function [] = question5(x_a_mone, x_b_mehane)
     question5_print_stuff("Blackman-Tukey L=20", Bag, stdag, MSEag, Bbg, stdbg,MSEbg);
 end
 
+% Run Question 4
 function [] = question4(x_a_mone, x_b_mehane)
     % Section A
     question4_periodogram(x_a_mone, x_b_mehane)
@@ -241,6 +254,7 @@ function [] = question4(x_a_mone, x_b_mehane)
     question4_blackman_tukey(x_a_mone, x_b_mehane, 20);
 end
 
+% Multiply a sequence with Bartlett-window
 function wx = multiply_with_bartlett_window(x)
     N = size(x, 1);
     l = [1 : N];
@@ -248,20 +262,7 @@ function wx = multiply_with_bartlett_window(x)
     wx = (window_vector') .* x;
 end
 
-% function [sxx_bt] = calc_blackman_tukey(x, L)
-%     K = 1024;
-%     N = size(x, 1);
-% 
-%     Xk = get_positive_fft(x, K);
-%     Sxxa_pos_periodogram = 1 / N * (Xk .* conj(Xk));
-%     
-%     w = (1 : N);
-%     Window = sin(w ./ 2 * (2 * L + 1)) ./ sin(w ./2);
-%     sxx_bt_larger = 1 / (2 * pi) * conv(Sxxa_pos_periodogram, Window);
-%     sxx_bt = sxx_bt_larger(1:1024);
-% %     sxx_bt = abs(get_positive_fft(x, K)) / (2 * pi);
-% end
-
+% Calculate B-T Estimator
 function [sxx_bt] = calc_blackman_tukey(x, L)
     K = 1024;
     N = size(x, 1);
@@ -274,6 +275,7 @@ function [sxx_bt] = calc_blackman_tukey(x, L)
     sxx_bt = abs(get_positive_fft(rxx_bt, K));
 end
 
+% Perform experiments for Q4 with B-T
 function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_blackman_tukey(x_a_mone, x_b_mehane, L)
     K = 1024;
     N = 400;
@@ -302,6 +304,7 @@ function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_
     plot_empiric_values(sxxb, Bb, std_b, RMSE_b, sprintf('Blackman-Tukey for x_b[n] with L=%d', L));
 end
 
+% Calculate Welsh Estimator
 function [sxx_welsh] = calc_welsh(x, L, D)
     N_SAMPLES = 1024;
     K = floor((size(x, 1) - L) / D) + 1;
@@ -319,6 +322,7 @@ function [sxx_welsh] = calc_welsh(x, L, D)
     sxx_welsh = empiric_average(all_sxx_welshes);
 end
 
+% Perform experiments for Q4 with Welsh Estimator
 function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_welsh(x_a_mone, x_b_mehane, L, D)
     K = 1024;
     N = 400;
@@ -347,6 +351,7 @@ function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_
     plot_empiric_values(sxxb, Bb, std_b, RMSE_b, sprintf('Welsh for x_b[n] with L=%d, D=%d', L, D));
 end
 
+% Calculate Bartlett Estimator
 function [sxx_bartlett] = calc_bartlett(x, K, L)
     N_SAMPLES = 1024;
     N = size(x, 1);
@@ -364,7 +369,7 @@ function [sxx_bartlett] = calc_bartlett(x, K, L)
     sxx_bartlett = empiric_average(all_sxx_bartletts);
 end
 
-
+% Perform experiments for Q4 with Bartlett Estimator
 function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_bartlett(x_a_mone, x_b_mehane, K_bartlett, L)
     K = 1024;
     N = 400;
@@ -394,6 +399,7 @@ function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_
 
 end
 
+% Calculate preiodogram estimator for Q4
 function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_periodogram(x_a_mone, x_b_mehane)
     K = 1024;
     N = 400;
@@ -424,6 +430,7 @@ function [sxxa_hat, Ba, std_a, RMSE_a, sxxb_hat, Bb, std_b, RMSE_b] = question4_
 
 end
 
+% Calculating all the empiric values of a series of experiments
 function [sxx_hat, B, std, RMSE] = calc_empiric_values(sxx_array, sxx)
     sxx_hat = empiric_average(sxx_array);
     B = empiric_bias(sxx_hat, sxx);
@@ -433,6 +440,7 @@ function [sxx_hat, B, std, RMSE] = calc_empiric_values(sxx_array, sxx)
     RMSE = MSE .^ 0.5;
 end
 
+% Plotting graphs of all empiric parameters on the same figure
 function [] = plot_empiric_values(sxx, B, std, RMSE, varname)
     figure;
     title(strcat('Performance:', {' '}, varname))
@@ -445,16 +453,19 @@ function [] = plot_empiric_values(sxx, B, std, RMSE, varname)
     legend('sxx', 'bias', 'std', 'RMSE')
 end
 
+% Calculate Empiric Average
 function [sxx_hat] = empiric_average(sxx_array)
     M = size(sxx_array, 1);
     sxx_hat = sum(sxx_array)';
     sxx_hat = sxx_hat / M;
 end
 
+% Calculate Empiric Bias
 function [B] = empiric_bias(sxx_hat, sxx)
     B = sxx_hat - abs(sxx);
 end
 
+% Calculate Empiric Variance
 function [V] = empiric_variance(sxx_hat, sxx_array)
     M = size(sxx_array, 1);
     v_array = (sxx_array - sxx_hat').^2;
@@ -462,6 +473,7 @@ function [V] = empiric_variance(sxx_hat, sxx_array)
     V = V/ M;
 end
 
+% Calculate Empiric MSE
 function [MSE] = empiric_mse(sxx_array, sxx)
     M = size(sxx_array, 1);
     v_array = (sxx_array - abs(sxx)') .^ 2;
@@ -476,6 +488,7 @@ function [] = question3(x_a_mone, x_b_mehane, Sxx_a, Sxx_b)
     question3_parts_abc(xb, Sxx_b, 'x_b');
 end
 
+% Transforming Rxx to Sxx
 function [sxx] = correlation_to_spectrum(rxx, K)
     N = (size(rxx, 1) + 1) / 2;
     rxx_cropped_padded = [rxx(N : 2 * N - 1); zeros(2 * K - N, 1)];
@@ -529,6 +542,7 @@ function [] = question3_parts_abc(x, Sxx, varname)
     legend('biased correlogram', 'unbiased correlogram', 'periodogram', 'true spectrum')
 end
 
+% Plotting  a spectrum graph with titles
 function [] = plot_spectrum(Sxx, s_name, varname)
     plot_spectrum_graph_only(Sxx);
     title(strcat('|', s_name, '(e^{j\omega})|(\omega) for', {' '}, varname))
@@ -536,6 +550,7 @@ function [] = plot_spectrum(Sxx, s_name, varname)
     ylabel(strcat('|', s_name, '(e^{j\omega})| [dB] for', {' '}, varname));
 end
 
+% Plotting the ablsolute value of a spectrum graph with titles
 function [] = plot_positive_spectrum(Sxx, s_name, varname)
     plot_positive_spectrum_graph_only(Sxx);
     title(strcat('|', s_name, '(e^{j\omega})|(\omega) for', {' '}, varname))
@@ -543,22 +558,26 @@ function [] = plot_positive_spectrum(Sxx, s_name, varname)
     ylabel(strcat('|', s_name, '(e^{j\omega})| [dB] for', {' '}, varname));
 end
 
+% Plotting  a spectrum graph
 function [] = plot_spectrum_graph_only(Sxx)
     w = linspace(0, pi, length(Sxx));
     plot(w, Sxx);
 end
 
+% Plotting the ablsolute value of a spectrum graph
 function [] = plot_positive_spectrum_graph_only(Sxx)
     w = linspace(0, pi, length(Sxx));
     plot(w, abs(Sxx));
 end
 
+%Get FFT of a series
 function ffted_x_positive = get_positive_fft(x, K)
     x_padded = [x' zeros(1, 2 * K - size(x, 1))];
     ffted_x = fft(x_padded);
     ffted_x_positive = ffted_x(1 : K)';
 end
 
+% Computing Rxx in length N of a process using unbiased correlogram
 function Rxx = estimate_unbiased_correlogram(x, N)
     Rxx = zeros((2 * N) - 1, 1);
     for l = (0: N - 1)
@@ -568,6 +587,8 @@ function Rxx = estimate_unbiased_correlogram(x, N)
     end
 end
 
+% Computing as single value Rxx[l] in length N of a process using
+% unbiased correlogram
 function Rxx_l = estimate_unbiased_correlogram_l(x, l, N)
     abs_l = abs(l);
     Rxx_l = 0;
@@ -577,6 +598,7 @@ function Rxx_l = estimate_unbiased_correlogram_l(x, l, N)
     Rxx_l = Rxx_l / (N - abs_l);
 end
 
+% Calculate the spectrum of proccess using freqz
 function [sxx, w, sxx_zeros, sxx_poles] = calc_real_spectrum(x_mone, x_mehane, K)
     x_mone_roots = roots(x_mone);
     x_mehane_roots = roots(x_mehane);
@@ -622,6 +644,7 @@ function [sxxa, sxxb] = question1(x_a_mone, x_b_mehane)
     ylabel('|S_{xx_b}(e^{j\omega})|');
 end
 
+% Plotting the Xa and Xb Processes
 function [] = question2(x_a_mone, x_b_mehane)
     [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane);
         
@@ -636,6 +659,7 @@ function [] = question2(x_a_mone, x_b_mehane)
     xlabel('n');
 end
 
+% Generte the Xa and Xb proccesses from the polynoms
 function [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane)
     wa = randn(404, 1);
     wb = randn(2000, 1);
@@ -646,6 +670,7 @@ function [xa, xb] = generate_xa_xb(x_a_mone, x_b_mehane)
     xb = xb_padded(1601:2000);
 end
 
+% Add the conjugate values after computing roots to a polynom 
 function [all_roots] = add_conj_inverse_roots(roots)
     conj_inverse_roots = 1 ./ conj(roots);
     all_roots = transpose([roots' conj_inverse_roots']);
